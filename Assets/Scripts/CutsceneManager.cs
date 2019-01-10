@@ -21,6 +21,11 @@ using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]   // the object this is on must have an Image component
 public class CutsceneManager : MonoBehaviour {
+    public Text clickText;                          // the helper text for letting you know you can click. THIS IS ONLY FOR DEBUG AND NOT NEEDED FOR THE ACTUAL CUTSCENE MANAGER
+    public string cutsceneFileName = "test";        // name of the cutscene file to open WITHOUT .json attached
+    public bool typeText = false;                   // do we want the cutscene to type text or display the text fully with fades
+    public float typeDelaySpeed = 0.1f;             // how long do we delay the typing speed - the higher the value, the slower the letters type
+
     GameObject cutsceneTextHandlerPrefab;           // prefab for texts
 
     CutsceneFrameData[] allFrames;                  // holds all frames of the cutscene
@@ -35,9 +40,6 @@ public class CutsceneManager : MonoBehaviour {
     int frameCount;                                 // counter for what frame we're on
     int batchStep;                                  // counter for stepping through a batch
     float fadeSpeed;                                // the speed at which we'll fade
-
-    public string cutsceneFileName = "test";        // name of the cutscene file to open WITHOUT .json attached
-    public float typeDelaySpeed = 0.1f;             // how long do we delay the typing speed - the higher the value, the slower the letters type
 
     bool waiting;                                   // true when waiting for the next text to begin
 
@@ -89,6 +91,11 @@ public class CutsceneManager : MonoBehaviour {
             }
             Debug.Log("Advancing");
         }
+
+        if (Input.GetKey(KeyCode.Return) || Input.GetMouseButton(0))
+            ChangeTextOnClick(true);
+        else
+            ChangeTextOnClick(false);
     }
 
     // Sets up a single frame
@@ -338,5 +345,20 @@ public class CutsceneManager : MonoBehaviour {
         }
 
         return toReturn;
+    }
+
+    // ONLY FOR DEBUG PURPOSES
+    void ChangeTextOnClick(bool onClick)
+    {
+        if (onClick)
+        {
+            clickText.text = "Clicking to Advance";
+            clickText.color = Color.red;
+        }
+        else
+        {
+            clickText.text = "Press Enter or Left Mouse Button to Advance";
+            clickText.color = new Color(1, 0.92156863f, 0, 1);
+        }
     }
 }

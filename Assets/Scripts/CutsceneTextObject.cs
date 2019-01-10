@@ -13,10 +13,13 @@ using UnityEngine;
 
 public class CutsceneTextObject : MonoBehaviour
 {
+    const float TEXT_FADE_SPEED = 1;         // text fade speed
+
     Text text;                          // the text this handler is editing
     string textToShow;                  // the string that the text will display
     float holdTime;                     // the amount of time that the text will delay spawning the next text or moving to the next batch or frame
     CutsceneManager cutsceneManager;    // the CutsceneManager handling this object
+    float maxAlpha;                     // the max alpha the text will reach
 
     void Awake()
     {
@@ -60,7 +63,8 @@ public class CutsceneTextObject : MonoBehaviour
             return;
         }
 
-        text.color = new Color(ctd.fontColor[0], ctd.fontColor[1], ctd.fontColor[2], ctd.fontColor[3]); // set the text color
+        text.color = new Color(ctd.fontColor[0], ctd.fontColor[1], ctd.fontColor[2], 0); // set the text color - set alpha to 0 so we can fade the text in
+        maxAlpha = ctd.fontColor[3];
 
         textToShow = ctd.textToShow;    // save the full text we're going to display in the end
         holdTime = ctd.holdTime;        // save the hold time we'll wait before displaying the next text
@@ -69,7 +73,10 @@ public class CutsceneTextObject : MonoBehaviour
         rectTransform.localPosition = new Vector3(ctd.position[0], ctd.position[1], ctd.position[2]);   // set the position of the text in the scene
         rectTransform.sizeDelta = new Vector2(ctd.sizeDelta[0], ctd.sizeDelta[1]);  // set the size of the text field in the scene
 
-        TypeSentence(typeDelaySpeed);   // begin typing the sentence with the set typeDelaySpeed
+        if(cutsceneManager.typeText)
+            TypeSentence(typeDelaySpeed);   // begin typing the sentence with the set typeDelaySpeed
+        else
+            DisplayAndFade();       // display the entire sentence, but fade in the text
     }
 
     // types out a new sentence
@@ -86,6 +93,8 @@ public class CutsceneTextObject : MonoBehaviour
         StopAllCoroutines();                    // stop all coroutines as the player force advanced past them
         text.text = textToShow;                 // reveal the entire sentence
 
+        text.color = new Color(text.color.r, text.color.g, text.color.b, maxAlpha); // fully reveal the text including setting it's alpha
+
         cutsceneManager.TextComplete(holdTime); // let the manager know that this text is completed
     }
 
@@ -93,6 +102,13 @@ public class CutsceneTextObject : MonoBehaviour
     public void SetTextToBlank()
     {
         text.text = "";
+    }
+
+    // fully display the text, but fade it in
+    void DisplayAndFade()
+    {
+        text.text = textToShow;
+        StartCoroutine(FadeText(maxAlpha, TEXT_FADE_SPEED));
     }
 
     // Coroutine for typing out text letter by letter
@@ -108,5 +124,20 @@ public class CutsceneTextObject : MonoBehaviour
         }
 
         cutsceneManager.TextComplete(holdTime); // when we're done, let the CutsceneManager know
+    }
+
+    // Coroutine for fading text - NOTE: Currently only being used to fade in text
+    IEnumerator FadeText(float aValue, float fadeSpeed)
+    {
+        float alpha = text.color.a; // retrieve the current text alpha
+        // slowly adjust the alpha over fadeSpeed seconds
+        for (float t = 0.0f; t < 1.0f; t += Time.deltaTime / fadeSpeed)
+        {
+            text.color = new Color(text.color.r, text.color.g, text.color.b, Mathf.Lerp(alpha, aValue, t)); // interpolate the alpha to the new value to make the change smooth
+            yield return null;
+        }
+
+        // This next line is only here because this function is only being used to fade in text at the moment
+        cutsceneManager.TextComplete(holdTime); // let the manager know that this text is completed and fully showing
     }
 }

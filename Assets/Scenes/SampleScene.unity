@@ -194,7 +194,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc6b74dc2ac5ad2438dde17c9a97eeb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cutsceneFileName: sample
+  clickText: {fileID: 234041615}
+  cutsceneFileName: Sample
+  typeText: 0
   typeDelaySpeed: 0.1
 --- !u!1 &234041613
 GameObject:
@@ -257,7 +259,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 0
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 1
