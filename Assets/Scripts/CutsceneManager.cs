@@ -43,6 +43,18 @@ public class CutsceneManager : MonoBehaviour {
 
     bool waiting;                                   // true when waiting for the next text to begin
 
+    public struct ParsedTextData
+    {
+        string textToShow;  // text to show
+        int fontSize;       // font size
+        float holdTime;     // the hold time before the text disappears
+        Font font;          // the font
+        Color color;        // the color of the font
+        TextAnchor anchor;  // the alignment of the text
+        Vector3 pos;        // the position of the text object's rect transform
+        Vector2 sizeDelta;  // the width and height of the text object's rect transform
+    }
+
     // grab the prefab and load json before doing anything else
     void Awake()
     {

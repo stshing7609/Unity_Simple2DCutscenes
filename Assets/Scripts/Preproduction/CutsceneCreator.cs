@@ -20,9 +20,14 @@ using System.IO;
 // require both a Canvas component and an Image component on this object
 [RequireComponent(typeof(Canvas))]
 [RequireComponent(typeof(Image))]
+[ExecuteInEditMode] // run the Awake function while in Editor mode
 public class CutsceneCreator : MonoBehaviour {
+    // we're saving the file to the preproduction folder in scripts as that folder cannot be built into a game
+    public const string textDefaultFilePath = "Assets/Scripts/Preproduction/textDefaults.json"; // the file path for the textDefaults
+
     public GameObject cutsceneTextObjectPrefab;             // prefab for a cutsceneTextObject
     public Image frameImage;                                // the current image for this frame
+    [HideInInspector] public CutsceneTextData textDefaults; // the default text options we've set up
     [HideInInspector] public int textCount = 0;             // number of texts active in a batch of texts
     [HideInInspector] public int frameCount = 0;            // total number of frames in this cutscene
     [HideInInspector] public float fadeInSpeed = 0.5f;      // float speed for fading into the current frame
@@ -38,6 +43,27 @@ public class CutsceneCreator : MonoBehaviour {
     [HideInInspector] public int batchStep = 0; // used to keep track of what text batch is being looked at in the list
     [HideInInspector] public int frameStep = 0; // used to keep track of what frame is being looked at in the list
 
+    // A public struct used to hold a text and rect transform
+    // It exists so we can parse CutsceneTextData into a Text object and a RectTransform
+    // It is public because it is used in CutsceneCreatorTextEditorWindow
+    public struct TextAndRectTransform
+    {
+        public Text text;
+        public RectTransform rt;
+    }
+
+    // grab the text defaults if they exist when CutsceneCreator is awoken
+    void Awake()
+    {
+        if (File.Exists(textDefaultFilePath))
+        {
+            // Read the json from the file into a string
+            string dataAsJson = File.ReadAllText(textDefaultFilePath);
+            // Pass the json to JsonUtility, and tell it to create a GameData object from it
+            textDefaults = JsonUtility.FromJson<CutsceneTextData>(dataAsJson);
+        }
+    }
+
     // Add a text object
     // Optional parameter: CutsceneTextData - used to preload values in to the text object
     public void AddText(CutsceneTextData ctd)
@@ -52,52 +78,23 @@ public class CutsceneCreator : MonoBehaviour {
         RectTransform rt = textGO.GetComponent<RectTransform>();
         Text text = textGO.GetComponent<Text>();
 
-        // set up a new text with no information
+        // make an object for our struct
+        TextAndRectTransform tart = new TextAndRectTransform();
+
+        // set up a new text with default information
         if (ctd == null)
         {
-            rt.localPosition = Vector3.zero;
-            text.text = "Enter your text here";
+            tart = ParseDataToText(textDefaults, text, rt);
         }
         // if given text, set up the text from that data
         else
         {
-            text.text = ctd.textToShow; // fill in the text field
-            // try to find and set the font
-            // check for default font
-            if (!ctd.font.Equals("Arial"))
-            {
-                try
-                {
-                    // search from Assets/Resouces/Fonts/
-                    text.font = Resources.Load<Font>("Fonts/" + ctd.font);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogError("Could not find font named " + ctd.font + ". Escaping CutsceneTextObject Init.\n" + e.Message);
-                    return;
-                }
-            }
-
-            text.fontSize = ctd.fontSize;   // set font size
-
-            // attempt to set the text alignment
-            try
-            {
-                text.alignment = (TextAnchor)System.Enum.Parse(typeof(TextAnchor), ctd.textAnchor);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("TextAnchor string to enum parse failed. Cannot parse " + ctd.textAnchor + ". Escaping CutsceneTextObject Init.\n" + e.Message);
-                return;
-            }
-
-            // set the color of the text
-            text.color = new Color(ctd.fontColor[0], ctd.fontColor[1], ctd.fontColor[2], ctd.fontColor[3]);
-
-            // set the position of the text and the size of the rectangle
-            rt.localPosition = new Vector3(ctd.position[0], ctd.position[1], ctd.position[2]);
-            rt.sizeDelta = new Vector2(ctd.sizeDelta[0], ctd.sizeDelta[1]);
+            tart = ParseDataToText(ctd, text, rt);
         }
+
+        // set the text and the rect transform we're using
+        text = tart.text;
+        rt = tart.rt;
 
         textCount++;    // add to our count of active texts
 
@@ -653,6 +650,60 @@ public class CutsceneCreator : MonoBehaviour {
     public string GetBatchCount()
     {
         return currentBatchList.Count.ToString();
+    }
+
+    // Parses CutsceneTextData into the components for a Text object and a RectTransform, then returns them as a TextAndRectTransform struct object
+    public TextAndRectTransform ParseDataToText(CutsceneTextData ctd, Text text, RectTransform rt)
+    {
+        TextAndRectTransform tart = new TextAndRectTransform();
+
+        text.text = ctd.textToShow; // fill in the text field
+
+        // try to find and set the font
+        // check for default font
+        if (!ctd.font.Equals("Arial"))
+        {
+            try
+            {
+                // search from Assets/Resouces/Fonts/
+                text.font = Resources.Load<Font>("Fonts/" + ctd.font);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Could not find font named " + ctd.font + ". Escaping CutsceneTextObject Init.\n" + e.Message);
+                return tart;
+            }
+        }
+        else
+        {
+            text.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+        }
+
+        text.fontSize = ctd.fontSize;   // set font size
+
+        // attempt to set the text alignment
+        try
+        {
+            text.alignment = (TextAnchor)System.Enum.Parse(typeof(TextAnchor), ctd.textAnchor);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("TextAnchor string to enum parse failed. Cannot parse " + ctd.textAnchor + ". Escaping CutsceneTextObject Init.\n" + e.Message);
+            return tart;
+        }
+
+        // set the color of the text
+        text.color = new Color(ctd.fontColor[0], ctd.fontColor[1], ctd.fontColor[2], ctd.fontColor[3]);
+
+        // set the position of the text and the size of the rectangle
+        rt.localPosition = new Vector3(ctd.position[0], ctd.position[1], ctd.position[2]);
+        rt.sizeDelta = new Vector2(ctd.sizeDelta[0], ctd.sizeDelta[1]);
+
+        // set the components of the TextAndRectTransform
+        tart.text = text;
+        tart.rt = rt;
+
+        return tart;
     }
 
     // creates a save directory of @directoryName

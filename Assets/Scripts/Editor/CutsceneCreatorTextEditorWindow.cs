@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
@@ -41,14 +42,27 @@ public class CutsceneCreatorTextEditorWindow : EditorWindow {
                 ctd = cutsceneCreator.currentTextDataList[targetIndex];
                 holdTime = ctd.holdTime;    // set the hold time
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError("Could not find textData of index " + targetIndex + ". Further details: " + e.Message);
             }
         }
         else
-        // otherwise, make a new data and add the window to the list
+        // otherwise, set up the defaults for a new text object and make a new data and add the window to the list
         {
+            // Call upon the CutsceneCreator's struct and method to set up the default parameters
+            CutsceneCreator.TextAndRectTransform tart = new CutsceneCreator.TextAndRectTransform();
+
+            tart = cc.ParseDataToText(cc.textDefaults, text, rt);
+
+            // set the parameters for the objects this class is using via the struct in CutsceneCreator
+            text = tart.text;
+            rt = tart.rt;
+
+            // set up holdTime separately as this is not included in the CutsceneCreator's method
+            holdTime = cc.textDefaults.holdTime;
+
+            // add the new cutscene text data to the window
             ctd = new CutsceneTextData();
             cutsceneCreator.activeWindows.Add(targetIndex, this);
         }

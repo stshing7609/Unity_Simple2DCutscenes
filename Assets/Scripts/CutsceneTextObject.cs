@@ -48,6 +48,10 @@ public class CutsceneTextObject : MonoBehaviour
                 return;
             }
         }
+        else
+        {
+            text.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+        }
 
         text.text = ""; // set the text to empty for now
         text.fontSize = ctd.fontSize;   // set the font size

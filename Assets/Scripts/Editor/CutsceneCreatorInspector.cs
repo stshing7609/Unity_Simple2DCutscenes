@@ -226,6 +226,13 @@ public class CutsceneCreatorInspector : Editor {
             }
         }
 
+        // open a window to set text defaults
+        if (GUILayout.Button("Set Text Defaults"))
+        {
+            DefaultTextOptionsWindow dtow = CreateInstance<DefaultTextOptionsWindow>();
+            dtow.Init(Current);
+        }
+
         // Navigation for Text Batches: New, Save, Back, Next, Go to, Delete
         EditorGUILayout.Space();
         GUILayout.Label("NAVIGATION");
