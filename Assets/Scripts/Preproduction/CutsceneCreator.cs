@@ -724,16 +724,16 @@ public class CutsceneCreator : MonoBehaviour {
     private void DestroyAllText()
     {
         ClearActiveWindows();
-        
-        // delete children twice because for some reason once doesn't work
-        for (int i = 0; i < transform.childCount; i++)
+
+        foreach (Transform child in transform)
         {
-            DestroyImmediate(transform.GetChild(i).gameObject);
+            DestroyImmediate(child.gameObject);
         }
 
-        for (int i = 0; i < transform.childCount; i++)
+        // for some reason, destroying all of the children text is unreliable, so recursively call this function until the cutscene creator no longer has any children
+        while (transform.childCount > 0)
         {
-            DestroyImmediate(transform.GetChild(i).gameObject);
+            DestroyAllText();
         }
     }
 
